@@ -1,33 +1,48 @@
 import requests
 import streamlit as st
 import os
+import pprint
 from dotenv import load_dotenv
 
-# Load environment variables from a .env file
 load_dotenv(override=True)
 
-# Set up the page configuration for the Streamlit app
 st.set_page_config(
     page_title="Previsão do Tempo",
     page_icon="☀️",
     layout="wide",
 )
 
-# --- API and Data Fetching Configuration ---
 link_api = "http://api.weatherapi.com/v1/current.json"
 api_key = os.getenv("chave")
 
-# --- Streamlit Frontend ---
-st.title("☀️ Previsão do Tempo em Minas Gerais")
+
+parametros = {
+    "key": api_key,
+    "q": "Minas Gerais",
+    "lang": "pt"
+}
+resposta = requests.get(link_api, params=parametros)
+
+print(resposta.status_code)
+print(resposta.content)
+
+if resposta.status_code == 200:
+    dados_requisição = resposta.json()
+    pprint.pprint(dados_requisição)
+temperatura_celsius = dados_requisição["current"]["temp_c"]
+descricao = dados_requisição["current"]["condition"]["text"]
+print(f"A temperatura atual em Minas Gerais é de {temperatura_celsius}°C com {descricao}.") 
+
+
+
+st.title("☀️ Previsão do Tempo")
 st.subheader("Verifique as condições climáticas em tempo real para sua cidade.")
 
-# Create a text input for the user to enter a city name
 cidade = st.text_input(
     "Digite o nome da cidade para verificar o tempo:",
     "Belo Horizonte"
 )
 
-# Only proceed with the API request if a city is entered
 if cidade:
     parametros = {
         "key": api_key,
@@ -35,23 +50,28 @@ if cidade:
         "lang": "pt"
     }
 
-    # Use a spinner to indicate that the app is loading data
+
+
+
+
     with st.spinner('Buscando dados do tempo...'):
         try:
             resposta = requests.get(link_api, params=parametros)
-            resposta.raise_for_status()  # Raise an exception for bad status codes
+            resposta.raise_for_status()  
             dados_requisição = resposta.json()
 
-            # Extract the relevant weather data
+        
             temperatura_celsius = dados_requisição["current"]["temp_c"]
             descricao = dados_requisição["current"]["condition"]["text"]
+            humidade = dados_requisição["current"]["humidity"]
+            vel_vento = dados_requisição["current"]["wind_kph"]
             icon_url = dados_requisição["current"]["condition"]["icon"]
 
-            # Display the weather information
+       
             st.success(f"Dados encontrados para **{cidade}**!")
             
-            # Show the weather icon
-            col_icon, col_temp, col_desc = st.columns([1, 2, 2])
+      
+            col_icon, col_temp, col_desc, col_humi, col_vento = st.columns([1, 2, 2, 4, 4])
             with col_icon:
                 st.image(f"https:{icon_url}")
             
@@ -60,6 +80,11 @@ if cidade:
             
             with col_desc:
                 st.metric(label="Condição", value=descricao)
+
+            with col_humi:
+                st.metric(label="Humidade", value=f"{humidade}°C")
+            with col_vento:
+                st.metric(label="Velocidade do vento", value=f"{vel_vento}°C")
 
         except requests.exceptions.HTTPError as err:
             if resposta.status_code == 400:
