@@ -82,12 +82,12 @@ if cidade:
                 st.metric(label="Condição", value=descricao)
 
             with col_humi:
-                st.metric(label="Humidade", value=f"{humidade}°C")
+                st.metric(label="Humidade", value=f"{humidade}°%")
             with col_vento:
-                st.metric(label="Velocidade do vento", value=f"{vel_vento}°C")
+                st.metric(label="Velocidade do vento", value=f"{vel_vento}°KM/h")
 
         except requests.exceptions.HTTPError as err:
-            if resposta.status_code == 400:
+            if resposta.status_code == 400:  
                 st.error(f"Não foi possível encontrar o tempo para **{cidade}**. Verifique o nome da cidade e tente novamente.")
             else:
                 st.error(f"Ocorreu um erro na requisição: {err}")
